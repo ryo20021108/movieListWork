@@ -1,0 +1,11 @@
+#list-group img {
+  height: 75px;
+}
+
+.list-group-item {
+  align-items: center;
+}
+
+.list-group-item h5 {
+  margin: 0;
+}
