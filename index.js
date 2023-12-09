@@ -1,4 +1,4 @@
-//---API---//
+//-----API-----//
 const BASE_URL = 'https://webdev.alphacamp.io'
 const INDEX_URL = BASE_URL + '/api/movies/'
 const POSTER_URL = BASE_URL + '/posters/'
@@ -9,10 +9,15 @@ const VIEW_MODE = {
   listMode: 'listMode'
 }
 
-
 //-----
 const dataPanel = document.querySelector('#data-panel')
 
+
+dataPanel.addEventListener('click', (event) => {
+  if (event.target.matches('.btn-show-movie')) {
+    view.showMovieModal(Number(event.target.dataset.id))
+  }
+})
 
 //-----MODEL-----//
 const model = {
@@ -61,7 +66,7 @@ const view = {
                   </div>
                   <div class="card-footer d-flex justify-content-end">
                     <button href="#" class="btn btn-primary me-1 btn-show-movie" data-bs-toggle="modal"
-                      data-bs-target="#movie-more">More</button>
+                      data-bs-target="#movie-more" data-id="${item.id}">More</button>
                     <button href="#" class="btn btn-danger btn-favorite">+</button>
                   </div>
                 </div>
@@ -76,12 +81,11 @@ const view = {
           rawHTML += `
           <li class="list-group-item d-flex justify-content-between" data.id="${item.id}">
             <img src="${POSTER_URL}${item.image}" alt="">
-            <div>
-              <h5>${item.id}＿${item.title}</h5>
+              <h5>${item.id}. ${item.title}</h5>
             </div>
-            <div> 
+            <div>
               <button href="#" class="btn btn-primary me-1 btn-show-movie" data-bs-toggle="modal"
-                data-bs-target="#movie-more">More</button>
+                data-bs-target="#movie-more"data-id="${item.id}">More</button>
               <button href="#" class="btn btn-danger btn-favorite">+</button>
             </div>
           </li>
@@ -91,6 +95,22 @@ const view = {
         break;
     }
     dataPanel.innerHTML = rawHTML
+  },
+
+  showMovieModal(id) {
+    const movieTitle = document.querySelector('#movie-modal-title');
+    const movieImage = document.querySelector('#movie-modal-image');
+    const movieDate = document.querySelector('#movie-modal-date');
+    const movieDescription = document.querySelector('#movie-modal-description');
+
+    const movie = model.movies.find(movie => movie.id === id)
+
+    if (movie) {
+      movieTitle.textContent = movie.title
+      movieImage.innerHTML = `<img src="${POSTER_URL}${movie.image}" alt="movie-poster" class="img-fluid">`;
+      movieDate.textContent = `Release Date : ${movie.release_date}`
+      movieDescription.textContent = movie.description
+    }
   }
 }
 
