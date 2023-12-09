@@ -24,7 +24,6 @@ const model = {
     }).catch((err) => console.log(err))
   },
 
-
 }
 
 //-----VIEW-----//
@@ -75,10 +74,10 @@ const view = {
         rawHTML = `<ul class="list-group" id="list-group">`
         data.forEach(item => {
           rawHTML += `
-          <li class="list-group-item d-flex justify-content-between ">
+          <li class="list-group-item d-flex justify-content-between" data.id="${item.id}">
             <img src="${POSTER_URL}${item.image}" alt="">
             <div>
-              <h5>${item.title}</h5>
+              <h5>${item.id}＿${item.title}</h5>
             </div>
             <div> 
               <button href="#" class="btn btn-primary me-1 btn-show-movie" data-bs-toggle="modal"
