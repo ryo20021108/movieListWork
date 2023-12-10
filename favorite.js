@@ -1,12 +1,3 @@
-//優化目標：
-// 1.用alert以外方式警告重複收藏
-// 2.在主頁中按下收藏後收藏按鈕後會轉換成移除按鈕
-// 3.favorite清空後顯示 未收藏或轉回首頁
-// 4.增加一鍵重置收藏按鈕
-// 5.增加mode switch button動態
-
-
-
 //-----API-----//
 const BASE_URL = 'https://webdev.alphacamp.io'
 const INDEX_URL = BASE_URL + '/api/movies/'
@@ -108,6 +99,14 @@ const view = {
     movieDescription.textContent = `"${movie.description}"`
   },
 
+  removeFavoriteMovie(id){
+
+    const favoriteIndex = model.favoriteMovies.findIndex(movie => movie.id === id)
+    model.favoriteMovies.splice(favoriteIndex, 1)
+    localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
+    view.renderMovies(model.favoriteMovies)
+  }
+
 }
 
 //-----CONTROLLER-----//
@@ -117,7 +116,7 @@ const controller = {
   generateMoviesList() {
     model.AXIOS_API()
       .then(() => {
-        view.renderMovies(model.movies);
+        view.renderMovies(model.favoriteMovies);
         this.setupEventListener();
       })
       .catch(err => console.log(err));
@@ -128,7 +127,6 @@ const controller = {
 
     const searchForm = document.querySelector('#search-form')
     const modeSwitch = document.querySelector('#mode-switch')
-
 
     modeSwitch.addEventListener('click', this.handleModeSwitch.bind(this))
     searchForm.addEventListener('submit', this.handleSearchForm.bind(this))
@@ -144,7 +142,7 @@ const controller = {
       } else if (event.target.classList.contains('fa-bars')) {
         model.setCurrentModel(VIEW_MODE.listMode)
       }
-      view.renderMovies(model.movies);
+      view.renderMovies(model.favoriteMovies);
       console.log(model.currentMode);
     }
   },
@@ -154,7 +152,7 @@ const controller = {
     event.preventDefault();
     const keyword = document.querySelector('#search-input').value.trim().toLowerCase();
 
-    model.filteredMovies = model.movies.filter(movie =>
+    model.filteredMovies = model.favoriteMovies.filter(movie =>
       movie.title.trim().toLowerCase().includes(keyword)
     );
 
@@ -173,11 +171,7 @@ const controller = {
     if (event.target.matches('.btn-show-movie')) {
       view.showMovieModal(movie)
     } else if (event.target.matches('.btn-favorite')) {
-      if (model.favoriteMovies.some(movie => movie.id === id)) {
-        return alert('已收藏')
-      }
-      model.favoriteMovies.push(movie)
-      localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
+      view.removeFavoriteMovie(id)
     }
   },
 
