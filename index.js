@@ -3,7 +3,6 @@
 // 2.在主頁中按下收藏後收藏按鈕後會轉換成移除按鈕
 // 3.favorite清空後顯示 未收藏或轉回首頁
 // 4.增加一鍵重置收藏按鈕
-// 5.增加mode switch button動態
 
 
 
@@ -19,6 +18,7 @@ const VIEW_MODE = {
 }
 
 const dataPanel = document.querySelector('#data-panel')
+const paginator = document.querySelector('#paginator')
 
 
 //-----MODEL-----//
@@ -26,6 +26,7 @@ const model = {
   movies: [],
   filteredMovies: [],
   favoriteMovies: JSON.parse(localStorage.getItem('favoriteMovies')) || [],
+  MOVIE_PRE_PAGE: 12,
 
   currentMode: VIEW_MODE.cardsMode,
 
@@ -41,12 +42,30 @@ const model = {
 
   getMovieByID(id) {
     return this.movies.find(movie => movie.id === id)
-  }
+  },
+
+  removeFavoriteMovie(id) {
+
+    const favoriteIndex = model.favoriteMovies.findIndex(movie => movie.id === id)
+    model.favoriteMovies.splice(favoriteIndex, 1)
+    localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
+  },
+
+  isFavorite(id) {
+    return this.favoriteMovies.some(movie => movie.id === id)
+  },
+
+  getMovieByPage(page){
+
+    const data = this.filteredMovies.length ? this.filteredMovies : this.movies
+    const startIndex = (page - 1) * this.MOVIE_PRE_PAGE
+    return data.slice(startIndex , startIndex + this.MOVIE_PRE_PAGE)
+  },
+
 }
 
 //-----VIEW-----//
 const view = {
-
 
   renderMovies(data) {
     let rawHTML = ''
@@ -54,6 +73,7 @@ const view = {
 
       case VIEW_MODE.cardsMode:
         data.forEach(item => {
+
           rawHTML += `
             <div class="col-sm-3">
               <div class="mb-3">
@@ -66,7 +86,7 @@ const view = {
                   <div class="card-footer d-flex justify-content-end">
                     <button href="#" class="btn btn-primary me-1 btn-show-movie" data-bs-toggle="modal"
                       data-bs-target="#movie-more" data-id="${item.id}">More</button>
-                    <button href="#" class="btn btn-danger btn-favorite" data-id="${item.id}">+</button>
+                    ${this.getFavoriteBtn(item)}
                   </div>
                 </div>
               </div>
@@ -85,7 +105,7 @@ const view = {
             <div>
               <button href="#" class="btn btn-primary me-1 btn-show-movie" data-bs-toggle="modal"
                 data-bs-target="#movie-more"data-id="${item.id}">More</button>
-              <button href="#" class="btn btn-danger btn-favorite" data-id="${item.id}">+</button>
+              ${this.getFavoriteBtn(item)}
             </div>
           </li>
           `
@@ -94,6 +114,16 @@ const view = {
         break;
     }
     dataPanel.innerHTML = rawHTML
+  },
+
+  getFavoriteBtn(item){
+
+    const isFavorite = model.favoriteMovies.some(movie => movie.id === item.id);
+    const buttonClass = isFavorite ? 'btn-danger' : 'btn-info';
+    const buttonText = isFavorite ? 'X' : '+';
+
+    return `<button href="#" class="btn ${buttonClass} btn-favorite" data-id="${item.id}">${buttonText}</button>`
+
   },
 
   showMovieModal(movie) {
@@ -108,6 +138,19 @@ const view = {
     movieDescription.textContent = `"${movie.description}"`
   },
 
+  renderPaginator(amount){
+    const numberOfPage = Math.ceil(amount / model.MOVIE_PRE_PAGE)
+
+    let rawHTML = ''
+
+    for(let page = 1; page <= numberOfPage; page++){
+      rawHTML += `<li class="page-item"><a class="page-link" href="#" data-page=${page}>${page}</a></li>`
+    }
+
+    paginator.innerHTML = rawHTML
+
+  }
+
 }
 
 //-----CONTROLLER-----//
@@ -117,7 +160,8 @@ const controller = {
   generateMoviesList() {
     model.AXIOS_API()
       .then(() => {
-        view.renderMovies(model.movies);
+        view.renderMovies(model.getMovieByPage(1));
+        view.renderPaginator(model.movies.length);
         this.setupEventListener();
       })
       .catch(err => console.log(err));
@@ -133,6 +177,7 @@ const controller = {
     modeSwitch.addEventListener('click', this.handleModeSwitch.bind(this))
     searchForm.addEventListener('submit', this.handleSearchForm.bind(this))
     dataPanel.addEventListener('click', this.handleCardButton.bind(this))
+    paginator.addEventListener('click', this.handlePaginator.bind(this))
 
 
   },
@@ -144,7 +189,7 @@ const controller = {
       } else if (event.target.classList.contains('fa-bars')) {
         model.setCurrentModel(VIEW_MODE.listMode)
       }
-      view.renderMovies(model.movies);
+      view.renderMovies(model.getMovieByPage(1));
       console.log(model.currentMode);
     }
   },
@@ -161,25 +206,39 @@ const controller = {
     if (model.filteredMovies.length === 0) {
       return alert('找不到電影：' + keyword);
     }
-    view.renderMovies(model.filteredMovies);
+    view.renderMovies(model.getMovieByPage(1))
+    view.renderPaginator(model.filteredMovies.length)
   },
 
   //card btn 監聽
   handleCardButton(event) {
 
+    const target = event.target
     const id = Number(event.target.dataset.id)
     const movie = model.getMovieByID(id)
 
     if (event.target.matches('.btn-show-movie')) {
-      view.showMovieModal(movie)
-    } else if (event.target.matches('.btn-favorite')) {
-      if (model.favoriteMovies.some(movie => movie.id === id)) {
-        return alert('已收藏')
+      view.showMovieModal(movie);
+    } else if (target.matches('.btn-favorite')) {
+      const isFavorite = model.isFavorite(id);
+      if (isFavorite) {
+        model.removeFavoriteMovie(id);
+        target.classList.replace('btn-danger', 'btn-info')
+        target.textContent = '+'
+      } else {
+        model.favoriteMovies.push(movie);
+        target.classList.replace('btn-info', 'btn-danger')
+        target.textContent = 'X'
       }
-      model.favoriteMovies.push(movie)
       localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
     }
   },
+  
+  handlePaginator(event){
+    const page = Number(event.target.dataset.page)
+    if(event.target.tagName !== 'A') return
+    view.renderMovies(model.getMovieByPage(page))
+  }
 
 }
 controller.generateMoviesList();

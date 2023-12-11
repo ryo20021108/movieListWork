@@ -10,6 +10,7 @@ const VIEW_MODE = {
 }
 
 const dataPanel = document.querySelector('#data-panel')
+const paginator = document.querySelector('#paginator')
 
 
 //-----MODEL-----//
@@ -17,6 +18,7 @@ const model = {
   movies: [],
   filteredMovies: [],
   favoriteMovies: JSON.parse(localStorage.getItem('favoriteMovies')) || [],
+  MOVIE_PRE_PAGE: 12,
 
   currentMode: VIEW_MODE.cardsMode,
 
@@ -32,12 +34,32 @@ const model = {
 
   getMovieByID(id) {
     return this.movies.find(movie => movie.id === id)
-  }
+  },
+
+  removeFavoriteMovie(id) {
+
+    const favoriteIndex = model.favoriteMovies.findIndex(movie => movie.id === id)
+    model.favoriteMovies.splice(favoriteIndex, 1)
+    localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
+    view.renderMovies(model.favoriteMovies)
+
+    view.renderPaginator(this.favoriteMovies.length)
+  },
+
+  getMovieByPage(page) {
+
+    const data = this.filteredMovies.length ? this.filteredMovies : this.favoriteMovies
+    const startIndex = (page - 1) * this.MOVIE_PRE_PAGE
+
+    return data.slice(startIndex, startIndex + this.MOVIE_PRE_PAGE)
+  },
+
+
+
 }
 
 //-----VIEW-----//
 const view = {
-
 
   renderMovies(data) {
     let rawHTML = ''
@@ -57,7 +79,7 @@ const view = {
                   <div class="card-footer d-flex justify-content-end">
                     <button href="#" class="btn btn-primary me-1 btn-show-movie" data-bs-toggle="modal"
                       data-bs-target="#movie-more" data-id="${item.id}">More</button>
-                    <button href="#" class="btn btn-danger btn-favorite" data-id="${item.id}">+</button>
+                    <button href="#" class="btn btn-danger btn-favorite" data-id="${item.id}">Ｘ</button>
                   </div>
                 </div>
               </div>
@@ -76,7 +98,7 @@ const view = {
             <div>
               <button href="#" class="btn btn-primary me-1 btn-show-movie" data-bs-toggle="modal"
                 data-bs-target="#movie-more"data-id="${item.id}">More</button>
-              <button href="#" class="btn btn-danger btn-favorite" data-id="${item.id}">+</button>
+              <button href="#" class="btn btn-danger btn-favorite" data-id="${item.id}">Ｘ</button>
             </div>
           </li>
           `
@@ -84,7 +106,12 @@ const view = {
         rawHTML += `</ul>`
         break;
     }
-    dataPanel.innerHTML = rawHTML
+
+    if (model.favoriteMovies.length === 0) {
+      dataPanel.innerHTML = `<h2>暫無收藏</h2>`
+    } else {
+      dataPanel.innerHTML = rawHTML
+    }
   },
 
   showMovieModal(movie) {
@@ -99,13 +126,19 @@ const view = {
     movieDescription.textContent = `"${movie.description}"`
   },
 
-  removeFavoriteMovie(id){
+  renderPaginator(amount) {
+    const numberOfPage = Math.ceil(amount / model.MOVIE_PRE_PAGE)
 
-    const favoriteIndex = model.favoriteMovies.findIndex(movie => movie.id === id)
-    model.favoriteMovies.splice(favoriteIndex, 1)
-    localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
-    view.renderMovies(model.favoriteMovies)
+    let rawHTML = ''
+
+    for (let page = 1; page <= numberOfPage; page++) {
+      rawHTML += `<li class="page-item"><a class="page-link" href="#" data-page=${page}>${page}</a></li>`
+    }
+
+    paginator.innerHTML = rawHTML
+
   }
+
 
 }
 
@@ -116,7 +149,8 @@ const controller = {
   generateMoviesList() {
     model.AXIOS_API()
       .then(() => {
-        view.renderMovies(model.favoriteMovies);
+        view.renderMovies(model.getMovieByPage(1));
+        view.renderPaginator(model.favoriteMovies.length)
         this.setupEventListener();
       })
       .catch(err => console.log(err));
@@ -131,6 +165,7 @@ const controller = {
     modeSwitch.addEventListener('click', this.handleModeSwitch.bind(this))
     searchForm.addEventListener('submit', this.handleSearchForm.bind(this))
     dataPanel.addEventListener('click', this.handleCardButton.bind(this))
+    paginator.addEventListener('click', this.handlePaginator.bind(this))
 
 
   },
@@ -159,7 +194,8 @@ const controller = {
     if (model.filteredMovies.length === 0) {
       return alert('找不到電影：' + keyword);
     }
-    view.renderMovies(model.filteredMovies);
+    view.renderMovies(model.getMovieByPage(1))
+    view.renderPaginator(model.filteredMovies.length)
   },
 
   //card btn 監聽
@@ -171,9 +207,15 @@ const controller = {
     if (event.target.matches('.btn-show-movie')) {
       view.showMovieModal(movie)
     } else if (event.target.matches('.btn-favorite')) {
-      view.removeFavoriteMovie(id)
+      model.removeFavoriteMovie(id)
     }
   },
+
+  handlePaginator(event) {
+    const page = Number(event.target.dataset.page)
+    if (event.target.tagName !== 'A') return
+    view.renderMovies(model.getMovieByPage(page))
+  }
 
 }
 controller.generateMoviesList();
