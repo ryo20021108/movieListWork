@@ -41,11 +41,23 @@
           <button class="btn btn-outline-success" type="submit" id="search-btn">Search</button>
         </form>
       </div>
-      <div class="col-sm-3 text-end pt-2" id="mode-switch">
-        <i class="fa-solid fa-grip fa-2xl" id="cards-mode"></i>
-        <i class="fa-solid fa-bars ms-2 fa-2xl" id="list-mode"></i>
+      <!-- mode-switch -->
+      <div class="col-sm-3 pt-1 d-flex justify-content-end">
+      
+        <!-- reset-btn -->
+        <button type="button" class="btn btn-outline-danger me-3" id="reset">Reset</button>
+      
+        <!-- mode-switch-btn -->
+        <div id="mode-switch">
+          <button type="button" class="btn btn-outline-dark mode-btn" id="cards-mode">
+            <i class="fa-solid fa-grip fa-xl"></i>
+          </button>
+          <button type="button" class="btn btn-outline-dark mode-btn" id="list-mode">
+            <i class="fa-solid fa-bars fa-xl"></i>
+          </button>
+        </div>
       </div>
-    </div>
+      </div>
     <!-- panel -->
     <div class="row m-3" id="data-panel">
       <!-- data-panel here start -->
@@ -82,6 +94,19 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex justify-content-end">
+        <div class="toast-body col-sm-10 text-center">
+          收藏已刪除
+        </div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
     </div>
   </div>

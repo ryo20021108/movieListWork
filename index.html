@@ -34,6 +34,7 @@
 
   <div class="container">
     <div class="row justify-content-between m-3">
+
       <!-- search -->
       <div class="col-sm-4">
         <form class="d-flex" role="search" id="search-form">
@@ -41,11 +42,24 @@
           <button class="btn btn-outline-success" type="submit" id="search-btn">Search</button>
         </form>
       </div>
-      <div class="col-sm-3 text-end pt-2" id="mode-switch">
-        <i class="fa-solid fa-grip fa-2xl" id="cards-mode"></i>
-        <i class="fa-solid fa-bars ms-2 fa-2xl" id="list-mode"></i>
+
+      <div class="col-sm-3 pt-1 d-flex justify-content-end">
+
+        <!-- reset-btn -->
+        <button type="button" class="btn btn-outline-danger me-3" id="reset">Reset</button>
+
+        <!-- mode-switch-btn -->
+        <div id="mode-switch">
+          <button type="button" class="btn btn-outline-dark mode-btn" id="cards-mode">
+            <i class="fa-solid fa-grip fa-xl"></i>
+          </button>
+          <button type="button" class="btn btn-outline-dark mode-btn" id="list-mode">
+            <i class="fa-solid fa-bars fa-xl"></i>
+          </button>
+        </div>
       </div>
     </div>
+
     <!-- panel -->
     <div class="row m-3" id="data-panel">
       <!-- data-panel here start -->
@@ -69,38 +83,35 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="movie-modal-body">
-         <div class="row">
-          <div class="col-sm-8" id="movie-modal-image"><img src="" class="img-fluid">
+          <div class="row">
+            <div class="col-sm-8" id="movie-modal-image"><img src="" class="img-fluid">
+            </div>
+            <div class="col-sm-4">
+              <p id="movie-modal-description">
+                <!-- movie-modal-description -->
+              </p>
+              <p>
+                <em id="movie-modal-date">Release Date : 2018-06-06</em>
+              </p>
+            </div>
           </div>
-          <div class="col-sm-4">
-            <p id="movie-modal-description">
-            <!-- movie-modal-description -->
-            </p>
-            <p>
-              <em id="movie-modal-date">Release Date : 2018-06-06</em>
-            </p>
-          </div>
-         </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- test -->
+  <!-- toast -->
 
-  <!-- <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
     <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="toast-header">
-        <img src="..." class="rounded me-2" alt="...">
-        <strong class="me-auto">Bootstrap</strong>
-        <small>11 mins ago</small>
-        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-      <div class="toast-body">
-        Hello, world! This is a toast message.
+      <div class="d-flex justify-content-end">
+        <div class="toast-body col-sm-10 text-center">
+          收藏已更新
+        </div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
     </div>
-  </div> -->
+  </div>
 
 
   <!-- font-awesome -->

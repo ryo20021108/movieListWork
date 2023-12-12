@@ -1,10 +1,3 @@
-//優化目標：
-// 1.用alert以外方式警告重複收藏
-// 2.在主頁中按下收藏後收藏按鈕後會轉換成移除按鈕
-// 3.favorite清空後顯示 未收藏或轉回首頁
-// 4.增加一鍵重置收藏按鈕
-
-
 
 //-----API-----//
 const BASE_URL = 'https://webdev.alphacamp.io'
@@ -27,8 +20,9 @@ const model = {
   filteredMovies: [],
   favoriteMovies: JSON.parse(localStorage.getItem('favoriteMovies')) || [],
   MOVIE_PRE_PAGE: 12,
-
+  
   currentMode: VIEW_MODE.cardsMode,
+  currentPage: 1,
 
   AXIOS_API() {
     return axios.get(INDEX_URL).then(response => {
@@ -55,12 +49,17 @@ const model = {
     return this.favoriteMovies.some(movie => movie.id === id)
   },
 
-  getMovieByPage(page){
+  getMovieByPage(page) {
 
     const data = this.filteredMovies.length ? this.filteredMovies : this.movies
     const startIndex = (page - 1) * this.MOVIE_PRE_PAGE
-    return data.slice(startIndex , startIndex + this.MOVIE_PRE_PAGE)
+    return data.slice(startIndex, startIndex + this.MOVIE_PRE_PAGE)
   },
+
+  resetFavorite() {
+    this.favoriteMovies = []
+    localStorage.removeItem('favoriteMovies')
+  }
 
 }
 
@@ -116,7 +115,7 @@ const view = {
     dataPanel.innerHTML = rawHTML
   },
 
-  getFavoriteBtn(item){
+  getFavoriteBtn(item) {
 
     const isFavorite = model.favoriteMovies.some(movie => movie.id === item.id);
     const buttonClass = isFavorite ? 'btn-danger' : 'btn-info';
@@ -138,12 +137,12 @@ const view = {
     movieDescription.textContent = `"${movie.description}"`
   },
 
-  renderPaginator(amount){
+  renderPaginator(amount) {
     const numberOfPage = Math.ceil(amount / model.MOVIE_PRE_PAGE)
 
     let rawHTML = ''
 
-    for(let page = 1; page <= numberOfPage; page++){
+    for (let page = 1; page <= numberOfPage; page++) {
       rawHTML += `<li class="page-item"><a class="page-link" href="#" data-page=${page}>${page}</a></li>`
     }
 
@@ -172,24 +171,29 @@ const controller = {
 
     const searchForm = document.querySelector('#search-form')
     const modeSwitch = document.querySelector('#mode-switch')
+    const resetBtn = document.querySelector('#reset')
 
 
     modeSwitch.addEventListener('click', this.handleModeSwitch.bind(this))
     searchForm.addEventListener('submit', this.handleSearchForm.bind(this))
     dataPanel.addEventListener('click', this.handleCardButton.bind(this))
     paginator.addEventListener('click', this.handlePaginator.bind(this))
+    resetBtn.addEventListener('click', this.handleResetBtn.bind(this))
 
 
   },
   //mode switch 監聽
   handleModeSwitch(event) {
-    if (event.target.classList.contains('fa-solid')) {
-      if (event.target.classList.contains('fa-grip')) {
+
+    const button = event.target.closest('.mode-btn')
+
+    if (button) {
+      if (button.id === 'cards-mode') {
         model.setCurrentModel(VIEW_MODE.cardsMode)
-      } else if (event.target.classList.contains('fa-bars')) {
+      } else if (button.id === 'list-mode') {
         model.setCurrentModel(VIEW_MODE.listMode)
       }
-      view.renderMovies(model.getMovieByPage(1));
+      view.renderMovies(model.getMovieByPage(model.currentPage));
       console.log(model.currentMode);
     }
   },
@@ -216,6 +220,8 @@ const controller = {
     const target = event.target
     const id = Number(event.target.dataset.id)
     const movie = model.getMovieByID(id)
+    const toastLive = document.querySelector('#liveToast')
+    const toast = new bootstrap.Toast(toastLive)
 
     if (event.target.matches('.btn-show-movie')) {
       view.showMovieModal(movie);
@@ -225,20 +231,29 @@ const controller = {
         model.removeFavoriteMovie(id);
         target.classList.replace('btn-danger', 'btn-info')
         target.textContent = '+'
+        toast.show()
       } else {
         model.favoriteMovies.push(movie);
         target.classList.replace('btn-info', 'btn-danger')
         target.textContent = 'X'
+        toast.show()
       }
       localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
     }
   },
-  
-  handlePaginator(event){
-    const page = Number(event.target.dataset.page)
-    if(event.target.tagName !== 'A') return
-    view.renderMovies(model.getMovieByPage(page))
-  }
 
+  handlePaginator(event) {
+    const page = Number(event.target.dataset.page)
+    if (event.target.tagName !== 'A') return
+
+    model.currentPage = page;
+    view.renderMovies(model.getMovieByPage(page))
+  },
+
+  handleResetBtn(event) {
+    if (event.target.id === 'reset')
+      model.resetFavorite();
+    view.renderMovies(model.getMovieByPage(1))
+  }
 }
 controller.generateMoviesList();

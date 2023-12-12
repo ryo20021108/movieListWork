@@ -21,6 +21,7 @@ const model = {
   MOVIE_PRE_PAGE: 12,
 
   currentMode: VIEW_MODE.cardsMode,
+  currentPage: 1,
 
   AXIOS_API() {
     return axios.get(INDEX_URL).then(response => {
@@ -54,7 +55,10 @@ const model = {
     return data.slice(startIndex, startIndex + this.MOVIE_PRE_PAGE)
   },
 
-
+  resetFavorite() {
+    this.favoriteMovies = []
+    localStorage.removeItem('favoriteMovies')
+  }
 
 }
 
@@ -161,23 +165,27 @@ const controller = {
 
     const searchForm = document.querySelector('#search-form')
     const modeSwitch = document.querySelector('#mode-switch')
+    const resetBtn = document.querySelector('#reset')
 
     modeSwitch.addEventListener('click', this.handleModeSwitch.bind(this))
     searchForm.addEventListener('submit', this.handleSearchForm.bind(this))
     dataPanel.addEventListener('click', this.handleCardButton.bind(this))
     paginator.addEventListener('click', this.handlePaginator.bind(this))
+    resetBtn.addEventListener('click', this.handleResetBtn.bind(this))
 
 
   },
   //mode switch 監聽
   handleModeSwitch(event) {
-    if (event.target.classList.contains('fa-solid')) {
-      if (event.target.classList.contains('fa-grip')) {
+    const button = event.target.closest('.mode-btn')
+
+    if (button) {
+      if (button.id === 'cards-mode') {
         model.setCurrentModel(VIEW_MODE.cardsMode)
-      } else if (event.target.classList.contains('fa-bars')) {
+      } else if (button.id === 'list-mode') {
         model.setCurrentModel(VIEW_MODE.listMode)
       }
-      view.renderMovies(model.favoriteMovies);
+      view.renderMovies(model.getMovieByPage(model.currentPage));
       console.log(model.currentMode);
     }
   },
@@ -203,18 +211,34 @@ const controller = {
 
     const id = Number(event.target.dataset.id)
     const movie = model.getMovieByID(id)
+    const toastLive = document.querySelector('#liveToast')
+    const toast = new bootstrap.Toast(toastLive)
 
     if (event.target.matches('.btn-show-movie')) {
       view.showMovieModal(movie)
     } else if (event.target.matches('.btn-favorite')) {
       model.removeFavoriteMovie(id)
+
+      toast.show()
     }
   },
 
   handlePaginator(event) {
     const page = Number(event.target.dataset.page)
     if (event.target.tagName !== 'A') return
-    view.renderMovies(model.getMovieByPage(page))
+    model.currentPage = page
+    view.renderMovies(model.getMovieByPage(model.currentPage))
+  },
+
+  handleResetBtn(event) {
+    const toastLive = document.querySelector('#liveToast')
+    const toast = new bootstrap.Toast(toastLive)
+
+    if (event.target.id === 'reset')
+      model.resetFavorite();
+    view.renderMovies(model.getMovieByPage(1))
+    view.renderPaginator(model.filteredMovies.length)
+    toast.show();
   }
 
 }

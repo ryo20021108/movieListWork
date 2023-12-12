@@ -9,3 +9,13 @@
 .list-group-item h5 {
   margin: 0;
 }
+
+.toast {
+  max-width: 150px;
+  background-color: #0d6efd;
+  color: white;
+}
+
+#liveToast .btn-close{
+  color: white;
+}
