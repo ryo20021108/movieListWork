@@ -9,6 +9,7 @@ const VIEW_MODE = {
   listMode: 'listMode'
 }
 
+//-----GLOBAL SELECTOR-----//
 const dataPanel = document.querySelector('#data-panel')
 const paginator = document.querySelector('#paginator')
 
@@ -23,20 +24,24 @@ const model = {
   currentMode: VIEW_MODE.cardsMode,
   currentPage: 1,
 
+  //接受API資料放進movies
   AXIOS_API() {
     return axios.get(INDEX_URL).then(response => {
       this.movies.push(...response.data.results)
     }).catch((err) => console.log(err))
   },
 
+  //設定目前模式
   setCurrentModel(mode) {
     return this.currentMode = mode;
   },
 
+  //從id尋找當前電影資料
   getMovieByID(id) {
     return this.movies.find(movie => movie.id === id)
   },
 
+  //從收藏裡刪除電影
   removeFavoriteMovie(id) {
 
     const favoriteIndex = model.favoriteMovies.findIndex(movie => movie.id === id)
@@ -47,6 +52,7 @@ const model = {
     view.renderPaginator(this.favoriteMovies.length)
   },
 
+  //將電影分頁，回傳分頁後的資料
   getMovieByPage(page) {
 
     const data = this.filteredMovies.length ? this.filteredMovies : this.favoriteMovies
@@ -55,6 +61,7 @@ const model = {
     return data.slice(startIndex, startIndex + this.MOVIE_PRE_PAGE)
   },
 
+//一鍵重置收藏
   resetFavorite() {
     this.favoriteMovies = []
     localStorage.removeItem('favoriteMovies')
@@ -65,10 +72,12 @@ const model = {
 //-----VIEW-----//
 const view = {
 
+  //主頁面渲染
   renderMovies(data) {
     let rawHTML = ''
-    switch (model.currentMode) {
 
+    //card/list模式切換
+    switch (model.currentMode) {
       case VIEW_MODE.cardsMode:
         data.forEach(item => {
           rawHTML += `
@@ -118,6 +127,7 @@ const view = {
     }
   },
 
+  //渲染modal
   showMovieModal(movie) {
     const movieTitle = document.querySelector('#movie-modal-title');
     const movieImage = document.querySelector('#movie-modal-image');
@@ -130,6 +140,7 @@ const view = {
     movieDescription.textContent = `"${movie.description}"`
   },
 
+  //渲染分頁器
   renderPaginator(amount) {
     const numberOfPage = Math.ceil(amount / model.MOVIE_PRE_PAGE)
 
@@ -185,6 +196,7 @@ const controller = {
       } else if (button.id === 'list-mode') {
         model.setCurrentModel(VIEW_MODE.listMode)
       }
+      //切換模式時依照當前頁面重新渲染
       view.renderMovies(model.getMovieByPage(model.currentPage));
       console.log(model.currentMode);
     }
@@ -211,6 +223,7 @@ const controller = {
 
     const id = Number(event.target.dataset.id)
     const movie = model.getMovieByID(id)
+    //初始化toast
     const toastLive = document.querySelector('#liveToast')
     const toast = new bootstrap.Toast(toastLive)
 
@@ -218,11 +231,11 @@ const controller = {
       view.showMovieModal(movie)
     } else if (event.target.matches('.btn-favorite')) {
       model.removeFavoriteMovie(id)
-
       toast.show()
     }
   },
 
+  //控制分頁器
   handlePaginator(event) {
     const page = Number(event.target.dataset.page)
     if (event.target.tagName !== 'A') return
@@ -230,7 +243,9 @@ const controller = {
     view.renderMovies(model.getMovieByPage(model.currentPage))
   },
 
+  //控制收藏重置按鈕
   handleResetBtn(event) {
+    //初始化toast
     const toastLive = document.querySelector('#liveToast')
     const toast = new bootstrap.Toast(toastLive)
 

@@ -20,24 +20,28 @@ const model = {
   filteredMovies: [],
   favoriteMovies: JSON.parse(localStorage.getItem('favoriteMovies')) || [],
   MOVIE_PRE_PAGE: 12,
-  
+
   currentMode: VIEW_MODE.cardsMode,
   currentPage: 1,
 
+  //從API獲取資料放入movies
   AXIOS_API() {
     return axios.get(INDEX_URL).then(response => {
       this.movies.push(...response.data.results)
     }).catch((err) => console.log(err))
   },
 
+  //將傳入模式設定為當前模式後回傳
   setCurrentModel(mode) {
     return this.currentMode = mode;
   },
 
+  //透過id尋找特定電影資料
   getMovieByID(id) {
     return this.movies.find(movie => movie.id === id)
   },
 
+  //用id從收藏清除單筆電影資料
   removeFavoriteMovie(id) {
 
     const favoriteIndex = model.favoriteMovies.findIndex(movie => movie.id === id)
@@ -45,10 +49,12 @@ const model = {
     localStorage.setItem('favoriteMovies', JSON.stringify(model.favoriteMovies))
   },
 
+  //確認該電影是否有在收藏中，有則回傳該筆資料
   isFavorite(id) {
     return this.favoriteMovies.some(movie => movie.id === id)
   },
 
+  //將電影分頁，回傳分頁後的資料
   getMovieByPage(page) {
 
     const data = this.filteredMovies.length ? this.filteredMovies : this.movies
@@ -56,6 +62,7 @@ const model = {
     return data.slice(startIndex, startIndex + this.MOVIE_PRE_PAGE)
   },
 
+  //一鍵 重置收藏資料
   resetFavorite() {
     this.favoriteMovies = []
     localStorage.removeItem('favoriteMovies')
@@ -66,6 +73,7 @@ const model = {
 //-----VIEW-----//
 const view = {
 
+  //主頁面渲染
   renderMovies(data) {
     let rawHTML = ''
     switch (model.currentMode) {
@@ -115,9 +123,10 @@ const view = {
     dataPanel.innerHTML = rawHTML
   },
 
+  //一開始渲染時候在收藏中搜尋是否有重複id 並切換button css
   getFavoriteBtn(item) {
 
-    const isFavorite = model.favoriteMovies.some(movie => movie.id === item.id);
+    const isFavorite = model.isFavorite(item.id)
     const buttonClass = isFavorite ? 'btn-danger' : 'btn-info';
     const buttonText = isFavorite ? 'X' : '+';
 
@@ -125,6 +134,7 @@ const view = {
 
   },
 
+  //渲染modal
   showMovieModal(movie) {
     const movieTitle = document.querySelector('#movie-modal-title');
     const movieImage = document.querySelector('#movie-modal-image');
@@ -137,6 +147,7 @@ const view = {
     movieDescription.textContent = `"${movie.description}"`
   },
 
+  //渲染分頁器
   renderPaginator(amount) {
     const numberOfPage = Math.ceil(amount / model.MOVIE_PRE_PAGE)
 
@@ -220,6 +231,8 @@ const controller = {
     const target = event.target
     const id = Number(event.target.dataset.id)
     const movie = model.getMovieByID(id)
+
+    //toast初始化
     const toastLive = document.querySelector('#liveToast')
     const toast = new bootstrap.Toast(toastLive)
 
@@ -227,6 +240,7 @@ const controller = {
       view.showMovieModal(movie);
     } else if (target.matches('.btn-favorite')) {
       const isFavorite = model.isFavorite(id);
+      //按下後依照收藏是否有該筆資料切換按鈕狀態
       if (isFavorite) {
         model.removeFavoriteMovie(id);
         target.classList.replace('btn-danger', 'btn-info')
@@ -242,6 +256,7 @@ const controller = {
     }
   },
 
+  //控制分頁器
   handlePaginator(event) {
     const page = Number(event.target.dataset.page)
     if (event.target.tagName !== 'A') return
@@ -250,6 +265,7 @@ const controller = {
     view.renderMovies(model.getMovieByPage(page))
   },
 
+  //控制收藏重置
   handleResetBtn(event) {
     if (event.target.id === 'reset')
       model.resetFavorite();
